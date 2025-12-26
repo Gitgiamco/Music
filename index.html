@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feliz Cumpleaños</title>
+
+<style>
+@import url('https://fonts.cdnfonts.com/css/lcd');
+*{ box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; }
+body{
+  display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center;
+  margin:0;
+  background: linear-gradient(#040909 60vh, #312c2a 80vh);
+  font-family:'LCD',sans-serif; font-family:'LCD2',sans-serif; font-family:'LCDMono2',sans-serif; font-family:'LCDMono',sans-serif; font-family:'Digitalism',sans-serif;
+
+  --_refl:#f3eeef;
+  --_bloom:#fcfbf9;
+  --_y1:#fae8a5;
+  --_y2:#fbd608;
+
+  --_o1:#ff8f0c;
+  --_o2:#e74702;
+  --_o3:#b32801;
+
+  --mw1:#d0d5d7;
+
+  --m1:#fdea09;
+  --m2:#e46703;
+  --m3:#ac2a04;
+}
+
+/* 🎆 Canvas de fuegos (detrás del Nixie) */
+#fireworks{
+  position:fixed; inset:0;
+  width:100%; height:100%;
+  pointer-events:none;
+  z-index:0; /* detrás */
+}
+
+/* Ruido */
+#noise-svg{ height:100%; width:100%; opacity:.12; position:absolute; z-index:100; pointer-events:none; }
+#noise-rect{ width:100vw; height:100vh; }
+
+/* Tamaño base */
+.clock{
+  transform: scale(2.2);
+  transform-origin: center;
+  position: relative;
+  width: 100%;
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: calc(var(--_size) * 0.008);
+
+  /* aumenta el ancho máximo del tubo */
+  --_factor: min(1200px, 80vh);
+  --_size: min(var(--_factor), 240vw);
+
+  z-index:2; /* por encima de los fuegos */
+}
+
+/* Sombra del conjunto */
+.shadow{
+  position:absolute; bottom:0; top:0; margin:auto; width:100%; height:0em; translate:0 45em;
+  box-shadow:
+    0 0 3em 2em #040909,
+    0 0 8em 3em var(--_o3),
+    0 0 10em 4em var(--_o2),
+    0 0 10em 5em var(--_o1);
+  opacity:.6;
+}
+.shadow::before{
+  content:''; display:block; position:absolute; left:0; right:0; margin:auto; height:50em; width:0;
+  box-shadow:
+    0 0 8em 6em var(--_y1),
+    0 0 8em 6em var(--_y2),
+    0 0 8em 8em var(--_o1),
+    0 0 8em 10em var(--_o2),
+    0 0 8em 12em var(--_o3);
+}
+.shadow::after{
+  content:''; display:block; position:absolute; z-index:-1; opacity:.5; left:0; right:0; margin:auto;
+  border-radius:50%; height:80em; width:10em; border:2px solid red; transform: rotateX(70deg);
+  box-shadow:
+    0 0em 12em 40em var(--_o1),
+    0 0em 12em 60em var(--_o2),
+    0 0em 12em 80em var(--_o3);
+}
+
+/* Apagado */
+.clock.off .shadow{ opacity:0; box-shadow: 0 0 4em 3em #040909, 0 0 8em 3em var(--_o3), 0 0 10em 4em var(--_o2), 0 0 10em 5em var(--_o1); }
+
+/* Tubos grandes */
+.outer-pipe{
+  position:absolute; z-index:2; width:calc(var(--_size)*(11/15)); height:var(--_size);
+  border-radius:20%/10%; overflow:hidden; opacity:1; --_clip-btm:85.8%;
+  clip-path: polygon(0 0, 100% 0, 100% var(--_clip-btm), 0 var(--_clip-btm));
+}
+.inner-pipe{
+  width:100%; height:100%; scale:.84 .90; border-radius:15%/7%;
+  box-shadow:
+    0em 104em 16em 20em #040909,
+    /* light on */
+    0em 1.2em 1em .2em var(--m3),
+    0em 1.2em 1em .5em var(--m2),
+    0em 1.2em .5em 1.2em var(--m1),
+    0em 1.2em 1.2em 1.5em var(--m2),
+    0em 1.2em 2em 2em var(--m3),
+    /* ---- */
+    0em 90em 16em 20em #040909,
+    /* nat light */
+    -1em 1em 2em 3.7em #040909,
+    .5em 0em 2em 3.7em #040909,
+    0em 0em 0em 4.6em var(--mw1),
+    0em 0em .5em 5em var(--mw1),
+    /* --------- */
+    0em 0em 0em 20em #040909;
+}
+.pipe-accents{ width:calc(var(--_size)*(10/15)); height:var(--_size); position:absolute; }
+.pipe-accents .top-tube,
+.pipe-accents .top,
+.pipe-accents .topinset,
+.pipe-accents .left,
+.pipe-accents .right{ z-index:3; }
+
+.pipe-accents .top-tube{
+  position:absolute; top:3%; left:0; right:0; margin:auto; width:4%; height:10%;
+  background: linear-gradient(120deg, rgba(60,62,62,1) 0%, rgba(4,9,0,1) 60%);
+  box-shadow:
+    inset -.2em 1.1em 1.4em -.4em var(--mw1),
+    inset 0em -1.2em .5em -1.1em var(--m1),
+    inset 0em -1.2em 1em -.8em var(--m2),
+    inset 0em -1.2em 1em -.2em var(--m3);
+  border-radius:20%;
+}
+.pipe-accents .tube-holders{
+  position:absolute; width:41em; height:87em; translate:0 -7em; margin:auto; left:0; right:0; top:0; bottom:0; z-index:2;
+}
+
+.pipe-accents .top{
+  position:absolute; top:-0.7%; left:0; right:0; margin:auto; width:22%; height:6%;
+  background: linear-gradient(120deg, rgba(60,62,62,1) 0%, rgba(4,9,0,1) 60%);
+  box-shadow:
+    inset -.2em 1.1em 1.4em -.4em var(--mw1),
+    inset 0 -1.2em .5em -1.1em var(--m1),
+    inset 0 -1.2em 1em -.8em var(--m2),
+    inset 0 -1.2em 1em -.2em var(--m3);
+  border-radius:20%;
+}
+.pipe-accents .topinset{
+  position:absolute; top:-1.7%; left:0; right:0; margin:auto; width:14%; height:8%;
+  background: linear-gradient(120deg, rgba(60,62,62,1) 0%, rgba(4,9,0,1) 60%);
+  box-shadow:
+    inset -.2em 1.1em 1.4em -.4em var(--mw1),
+    inset 0 -1.2em .5em -1.1em var(--m1),
+    inset 0 -1.2em 1em -.8em var(--m2),
+    inset 0 -1.2em 1em -.2em var(--m3);
+  border-radius:50%;
+}
+.pipe-accents .topinset::before{
+  content:''; display:block; width:50%; height:50%; border-radius:50%; position:absolute; left:0; right:0; top:0; bottom:0; margin:auto;
+  box-shadow:
+    inset 0 0 0em .1em #040909,
+    0 0 .5em .1em var(--_bloom),
+    inset 0 0 1.3em .2em var(--_o3),
+    inset 0 0 1.3em .4em var(--_o2),
+    inset 0 0 1.3em .6em var(--_o1),
+    inset 0 0 1.3em 2em var(--_y1);
+  animation: 5s flicker linear infinite;
+}
+@keyframes flicker{
+  0%{opacity:1} 10%{opacity:1} 11%{opacity:.8} 12%{opacity:1}
+  65%{opacity:1} 66%{opacity:.7} 67%{opacity:.9} 68%{opacity:1}
+  69%{opacity:.4} 70%{opacity:1} 100%{top:1}
+}
+
+/* Esquinas inferiores externas */
+.pipe-accents .bottom-left,
+.pipe-accents .bottom-right{
+  position:absolute; bottom:12%; width:12%; height:2.4%; background:#040909; border-radius:40%;
+  border-top-left-radius:50%; border-top-right-radius:50%;
+  box-shadow: inset -.4em -.1em 1em -.4em var(--mw1),
+             inset -2em 0em 1.8em -1.5em var(--m3),
+             inset -2em 0em 1.9em -1.3em var(--m2),
+             inset -2em 0em 2em -1em var(--m1);
+}
+.pipe-accents .bottom-left{ left:-6%; }
+.pipe-accents .bottom-right{ right:-6%; }
+.pipe-accents .bottom-left::before,
+.pipe-accents .bottom-right::before{
+  display:block; content:''; position:absolute; top:-24%; left:0; right:0; margin:auto; background:#040909; width:90%; height:70%;
+  border-radius:50%; border-top-left-radius:40%; border-top-right-radius:40%;
+  box-shadow: inset -.4em 0em 1em -.3em var(--mw1),
+             inset -2em 0em 1.8em -1.5em var(--m3),
+             inset -2em 0em 1.9em -1.3em var(--m2),
+             inset -2em 0em 2em -1em var(--m1);
+}
+
+
+
+
+/* Tubo pequeño frontal */
+.small-outer-pipe{
+  position:absolute; translate:0 -5.6%;
+  width:calc(var(--_size)*(1/1.7)); height:calc(var(--_size)*0.85);
+  border-radius:40%/10%; overflow:hidden; opacity:1; --_clip-btm:96%;
+  clip-path: polygon(0 0, 100% 0, 100% var(--_clip-btm), 0 var(--_clip-btm));
+  border-top:.3em solid var(--mw1);
+}
+.small-inner-pipe{
+  width:100%; height:100%; scale:.92 .98; border-radius:35%/10%;
+  box-shadow:
+    0em -94em 20em 20em #040909,
+    0em 104em 20em 20em #040909,
+    /* light on */
+    0em 1em 1em .2em var(--m3),
+    0em 1em 1em .5em var(--m2),
+    0em 1em .5em 1.2em var(--m1),
+    0em 1em 1.2em 1.5em var(--m2),
+    0em 1em 2em 2em var(--m3),
+    /* ---- */
+    -0.2em .5em .8em -.2em var(--mw1),
+    0em 90em 16em 20em #040909,
+    -1em 1em 2em 2em #040909,
+    .5em 0em 2em 2em #040909,
+    0em 0em 0em 4.6em var(--mw1),
+    0em 0em 1.5em 5em var(--mw1),
+    0em 0em 0em 20em #040909;
+}
+
+/* Base */
+.base-container{ position:absolute; width:calc(var(--_size)*(9.6/15)); height:var(--_size); }
+.base-container .base{ width:100%; height:100%; position:absolute; }
+.base-container .base div{
+  background:#040909; position:absolute; bottom:4%; left:-10%; width:120%; height:12%;
+  border-radius:40% 40% / 30% 30%;
+  box-shadow: 0 2em 2em -1.4em #504c4cff, inset -.4em .1em .8em -.2em var(--mw1);
+}
+.base-container .base div::before{
+  content:""; display:block; width:100%; height:50%; border-radius:100%;
+  box-shadow:
+    0 2em 10em 0 #000,
+    inset -.4em 0em .8em 0em var(--mw1),
+    inset 0em 0em .5em .3em #040909,
+    inset 0em 0em .5em .3em #040909,
+    inset 0em 0em 1em 0em #040909,
+    inset 0em 0em 2em 0em #040909,
+    inset 0em 0em 3em 0em #040909,
+    inset 0em 0em 1em 0em var(--m3),
+    inset 0em 0em 1em 2em var(--m2),
+    inset 1em .3em 10em 10em var(--m1);
+}
+
+/* Display de dígitos/letras */
+.display{
+  color: var(--_bloom);
+  font-size: 13em;
+  line-height: 0.9em;
+  translate: 0 -0.45em;
+  transform: scale(0.9);
+  transform-origin: center center;
+}
+.display .row{ display:flex; }
+.display .small-row{ font-size:.31em; position:absolute; right:-22%; top:10%; }
+.display .small-row .row{ flex-direction:column; line-height:1.02em; }
+.display .row .col{ display:flex; position:relative; }
+.display .row .col > div:nth-child(1){ opacity:.2; } /* capa base "8" */
+.display .row .col > div:nth-child(2){ position:absolute; right:0; z-index:2; } /* caracter visible */
+.display .row .col > div:nth-child(3){
+  position:absolute; right:0; color:var(--_bloom);
+  --_o1-size:.1em; --_o2-size:.4em; --_o3-size:.6em;
+  text-shadow:
+    0em 0em .04em var(--_bloom), 0em 0em .04em var(--_bloom),
+    0em 0em var(--_o3-size) var(--_o3), 0em 0em var(--_o3-size) var(--_o3), 0em 0em var(--_o3-size) var(--_o3), 0em 0em var(--_o3-size) var(--_o3),
+    0em 0em var(--_o2-size) var(--_o2), 0em 0em var(--_o2-size) var(--_o2), 0em 0em var(--_o2-size) var(--_o2), 0em 0em var(--_o2-size) var(--_o2),
+    0em 0em var(--_o1-size) var(--_o1), 0em 0em var(--_o1-size) var(--_o1), 0em 0em var(--_o1-size) var(--_o1), 0em 0em var(--_o1-size) var(--_o1);
+}
+
+/* Tubo de vidrio */
+.glass-tube{
+  position:absolute; width:64em; height:80em; translate:0 -7em; border-radius:100px;
+  box-shadow:
+    0em 0em 1em -.2em var(--m1),
+    0em 0em 2em -.4em var(--m2),
+    0em 0em 3em -.4em var(--m2),
+    inset 0em 0em .4em .2em var(--m3),
+    inset 0em 0em .6em .4em var(--m2),
+    inset 0em 0em 1em .7em var(--m1),
+    inset 0em 0em 3em 0em var(--m2),
+    inset 0em 0em 5em 1em var(--m3),
+    inset -.1em .1em .1em 0em var(--mw1),
+    inset 0 0 1em .1em var(--mw1);
+}
+.glass-tube::before{
+  content:""; display:block; width:6%; opacity:.9; height:60%;
+  box-shadow: inset 1.5em 0em 1em -1em var(--mw1);
+  position:absolute; left:4%; top:16%; filter:blur(.6px); opacity:.8; border-radius:100% 1% / 50% 100%;
+}
+.glass-tube::after{
+  content:""; display:block; width:30%; opacity:.9; height:60%;
+  box-shadow: inset -1em .5em 1em -1em var(--mw1);
+  position:absolute; right:4%; top:4%; filter:blur(.6px); opacity:1; border-radius:0% 100% / 10% 30%;
+}
+
+/* Hex overlay */
+.hex{
+  position:absolute; width:64.7em; height:76em; translate:0 -7em; border-radius:100px; overflow:hidden; z-index:-1; opacity:.7;
+  --_hex-cl1:#040909; --_hex-cl2:var(--_o1); --_hex-size:2.18em;
+  background:
+    radial-gradient(circle farthest-side at 0% 50%, var(--_hex-cl1) 23.5%, rgba(240,166,17,0) 0) calc(1.06*var(--_hex-size)) calc(1.5*var(--_hex-size)),
+    radial-gradient(circle farthest-side at 0% 50%, var(--_hex-cl2) 24%, rgba(240,166,17,0) 0) calc(0.94*var(--_hex-size)) calc(1.5*var(--_hex-size)),
+    linear-gradient(var(--_hex-cl1) 14%, rgba(240,166,17,0) 0, rgba(240,166,17,0) 85%, var(--_hex-cl1) 0)0 0,
+    linear-gradient(150deg, var(--_hex-cl1) 24%, var(--_hex-cl2) 0, var(--_hex-cl2) 26%, rgba(240,166,17,0) 0, rgba(240,166,17,0) 74%, var(--_hex-cl2) 0, var(--_hex-cl2) 76%, var(--_hex-cl1) 0)0 0,
+    linear-gradient(30deg, var(--_hex-cl1) 24%, var(--_hex-cl2) 0, var(--_hex-cl2) 26%, rgba(240,166,17,0) 0, rgba(240,166,17,0) 74%, var(--_hex-cl2) 0, var(--_hex-cl2) 76%, var(--_hex-cl1) 0)0 0,
+    linear-gradient(90deg, var(--_hex-cl2) 2%, var(--_hex-cl1) 0, var(--_hex-cl1) 98%, var(--_hex-cl2) 0%)0 0 var(--_hex-cl1);
+  background-size:calc(2*var(--_hex-size)) calc(3*var(--_hex-size));
+}
+.hex .overlay{
+  position:absolute; background:#fff; mix-blend-mode:overlay; width:200%; left:-40%; height:12%; rotate:40deg; animation:5s electric ease-in infinite;
+}
+@keyframes electric{ 0%{top:700%} 100%{top:-20%} }
+
+/* Base del tubo principal */
+.tube-base-container{ position:absolute; width:54em; height:40em; translate:0 24em; }
+.tube-base{
+  position:absolute; bottom:-7%; width:60%; height:20%; background:#040909; left:0; right:0; margin:auto; border-radius:40%/40%;
+  box-shadow:
+    inset 0em -.1em 1.2em -.4em var(--mw1),
+    inset 0em 3em 2.8em -2.5em var(--m3),
+    inset 0em 3em 3.9em -2.3em var(--m2),
+    inset 0em 3em 4em -2em var(--m1);
+}
+.tube-base::before{
+  display:block; content:''; width:99%; height:62%; background:#040909; border-radius:50%;
+  box-shadow:
+    inset 0em -.1em 1.2em -.4em var(--mw1),
+    inset 0em 0em 1.8em -.5em var(--m3),
+    inset 0em 0em 1.9em -.3em var(--m2),
+    inset 0em 0em 2em 0em var(--m1);
+}
+.tube-btm{
+  width:40%; height:10%; position:absolute; left:0; right:0; margin:auto; bottom:22%; background-color:#040909; border-radius:20% 20% 100% 100%;
+  box-shadow:
+    inset 0em 0em 1.2em -.2em var(--mw1),
+    inset 0em .3em 1.2em 0em var(--m1),
+    inset 0em .3em 1.2em .3em var(--m2),
+    inset 0em .3em 1.2em .6em var(--m3);
+}
+
+/* Varillas internas */
+.rods{ width:50%; height:28%; position:absolute; left:0; right:0; margin:auto; bottom:2%; --_clip-btm:80%;
+  clip-path: polygon(0 0, 100% 0, 100% var(--_clip-btm), 0 var(--_clip-btm));
+}
+.rods .left-rod{ width:60%; height:12%; rotate:60deg; position:absolute; bottom:55%; left:0; background:#040909; }
+.rods .center-rod{ width:0%; height:12%; rotate:90deg; position:absolute; bottom:49%; right:0; left:0; margin:auto; background:#040909; }
+.rods .right-rod{ width:60%; height:12%; rotate:-60deg; position:absolute; bottom:55%; right:0; background:#040909; }
+.rods .left-rod,.rods .center-rod,.rods .right-rod{
+  box-shadow:
+    inset 0em .1em .8em -.2em var(--mw1),
+    inset 0em .1em 1em -.7em var(--m1),
+    inset 0em .1em 1em -.3em var(--m2),
+    inset 0em .1em 1em 0em var(--m3);
+}
+
+/* Botón */
+.button{
+  position:absolute; width:6em; height:4em; border-radius:40%;
+  left:0; right:0; margin:auto; top:0; bottom:10; translate:0 63em; z-index:100; cursor:pointer;
+  background:var(--_bloom);
+  box-shadow:
+    0em -.1em .2em 0em var(--_o1),
+    0em -.1em .2em .1em var(--_o2),
+    0em -.1em .2em .2em var(--_o3),
+    0em -.1em 1em .5em var(--_bloom),
+    inset 0em 0em 1em 0em var(--_o3),
+    inset 0em 0em 1em .5em var(--_o2),
+    inset 0em 0em 1em 1em var(--_o1);
+  filter: blur(1px);
+}
+
+/* Transiciones globales */
+*, *::before, *::after{ transition: box-shadow 2s ease-in-out, opacity 2s ease-in-out; user-select:none; }
+
+/* Estado OFF (apaga brillos, deja marco tenue) */
+.clock.off .hex{ opacity:.3; filter:grayscale(1); }
+.clock.off .hex .overlay{ display:none; }
+.clock.off .pipe-accents .top-tube,
+.clock.off .pipe-accents .top,
+.clock.off .pipe-accents .topinset{
+  box-shadow:
+    inset -.2em 1.1em 1.4em -.4em var(--mw1),
+    inset 0 -1.2em .5em -1.1em rgba(0,0,0,0),
+    inset 0 -1.2em 1em -.8em rgba(0,0,0,0),
+    inset 0 -1.2em 1em -.2em rgba(0,0,0,0);
+}
+.clock.off .pipe-accents .topinset::before{
+  box-shadow:
+    inset 0 0 0em .1em #040909,
+    -.1em .2em .7em .1em rgba(255,255,255,.4),
+    inset 0 0 1.3em .2em rgba(0,0,0,0),
+    inset 0 0 1.3em .4em rgba(0,0,0,0),
+    inset 0 0 1.3em .6em rgba(0,0,0,0),
+    inset 0 0 1.3em 2em rgba(0,0,0,0);
+  animation-play-state: paused;
+}
+.clock.off .pipe-accents .tube-holders div{
+  box-shadow:
+    inset 0 0 .1em .1em #ffffff5d,
+    inset 0 -1.2em .5em -1.1em rgba(0,0,0,0),
+    inset 0 -1.2em 1em -.8em rgba(0,0,0,0),
+    inset 0 -1.2em 1em -.2em rgba(0,0,0,0);
+}
+.clock.off .inner-pipe{
+  box-shadow:
+    0em 104em 16em 20em #040909,
+    0em 1.2em 1em .2em rgba(0,0,0,0),
+    0em 1.2em 1em .5em rgba(0,0,0,0),
+    0em 1.2em .5em 1.2em rgba(0,0,0,0),
+    0em 1.2em 1.2em 1.5em rgba(0,0,0,0),
+    0em 1.2em 2em 2em rgba(0,0,0,0),
+    0em 90em 16em 20em #040909,
+    -1em 1em 2em 3.7em #040909,
+    .5em 0em 2em 3.7em #040909,
+    0em 0em 0em 4.6em var(--mw1),
+    0em 0em .5em 5em var(--mw1),
+    0em 0em 0em 20em #040909;
+}
+.clock.off .small-inner-pipe{
+  box-shadow:
+    0em -94em 20em 20em #040909,
+    0em 104em 20em 20em #040909,
+    0em 1em 1em .2em rgba(0,0,0,0),
+    0em 1em 1em .5em rgba(0,0,0,0),
+    0em 1em .5em 1.2em rgba(0,0,0,0),
+    0em 1em 1.2em 1.5em rgba(0,0,0,0),
+    0em 1em 2em 2em rgba(0,0,0,0),
+    -0.2em .5em .8em -.2em var(--mw1),
+    0em 90em 16em 20em #040909,
+    -1em 1em 2em 2em #040909,
+    .5em 0em 2em 2em #040909,
+    0em 0em 0em 4.6em var(--mw1),
+    0em 0em 1.5em 5em var(--mw1),
+    0em 0em 0em 20em #040909;
+}
+.clock.off .pipe-accents .bottom-left,
+.clock.off .pipe-accents .bottom-right{
+  box-shadow:
+    inset -.4em -.1em 1em -.4em var(--mw1),
+    inset -3em 0em 1.8em -1.5em rgba(0,0,0,0),
+    inset -3em 0em 1.9em -1.3em rgba(0,0,0,0),
+    inset -3em 0em 2em -1em rgba(0,0,0,0);
+}
+.clock.off .pipe-accents .bottom-left::before,
+.clock.off .pipe-accents .bottom-right::before{
+  box-shadow:
+    inset -.4em 0em 1em -.3em var(--mw1),
+    inset -3em 0em 1.8em -1.5em rgba(0,0,0,0),
+    inset -3em 0em 1.9em -1.3em rgba(0,0,0,0),
+    inset -3em 0em 2em -1em rgba(0,0,0,0);
+}
+.clock.off .left div:nth-child(1),
+.clock.off .left div:nth-child(2),
+.clock.off .left div:nth-child(3),
+.clock.off .right div:nth-child(1),
+.clock.off .right div:nth-child(2),
+.clock.off .right div:nth-child(3){
+  box-shadow:
+    inset -.1em .4em .6em -.2em var(--mw1),
+    inset 0 0 0 0 rgba(0,0,0,0);
+}
+.clock.off .base-container .base div::before{
+  box-shadow:
+    0 2em 10em 0 #000, inset -.4em 0em .8em 0em var(--mw1),
+    inset 0em 0em .5em .3em #040909, inset 0em 0em .5em .3em #040909,
+    inset 0em 0em 1em 0em #040909, inset 0em 0em 2em 0em #040909,
+    inset 0em 0em 3em 0em #040909, inset 0em 0em 0 0 rgba(0,0,0,0);
+}
+
+/* Apagar brillo de letras en OFF */
+.clock.off .display .row .col > div:nth-child(2),
+.clock.off .display .row .col > div:nth-child(3){ opacity:0; }
+
+/* Tubo de vidrio y base apagados (mantener resaltos metálicos) */
+.clock.off .glass-tube{
+  box-shadow:
+    0em 0em 1em -.2em rgba(0,0,0,0),
+    0em 0em 2em -.4em rgba(0,0,0,0),
+    0em 0em 3em -.4em rgba(0,0,0,0),
+    inset 0em 0em .4em .2em rgba(0,0,0,0),
+    inset 0em 0em .6em .4em rgba(0,0,0,0),
+    inset 0em 0em 1em .7em rgba(0,0,0,0),
+    inset 0em 0em 3em 0em rgba(0,0,0,0),
+    inset 0em 0em 5em 1em rgba(0,0,0,0),
+    inset -.1em .1em .1em 0em var(--mw1),
+    inset 0 0 1em .1em var(--mw1);
+}
+.clock.off .tube-base{
+  box-shadow:
+    inset 0em -.1em 1.2em -.4em var(--mw1),
+    inset 0em 3em 2.8em -2.5em rgba(0,0,0,0),
+    inset 0em 3em 3.9em -2.3em rgba(0,0,0,0),
+    inset 0em 3em 4em -2em rgba(0,0,0,0);
+}
+.clock.off .tube-base::before{
+  box-shadow:
+    inset 0em -.1em 1.2em -.4em var(--mw1),
+    inset 0em 0em 1.8em -.5em rgba(0,0,0,0),
+    inset 0em 0em 1.9em -.3em rgba(0,0,0,0),
+    inset 0em 0em 2em 0em rgba(0,0,0,0);
+}
+.clock.off .tube-btm{
+  box-shadow:
+    inset 0em 0em 1.2em -.2em var(--mw1),
+    inset 0em .3em 1.2em 0em rgba(0,0,0,0),
+    inset 0em .3em 1.2em .3em rgba(0,0,0,0),
+    inset 0em .3em 1.2em .6em rgba(0,0,0,0);
+}
+.clock.off .tube-btm::before{
+  box-shadow:
+    inset 0em -.1em .7em -.2em var(--mw1),
+    inset 0em .1em 1em -.7em rgba(0,0,0,0),
+    inset 0em .1em 1em -.3em rgba(0,0,0,0),
+    inset 0em .1em 1em 0em rgba(0,0,0,0);
+}
+.clock.off .rods .left-rod,
+.clock.off .rods .center-rod,
+.clock.off .rods .right-rod{
+  box-shadow:
+    inset 0em .1em .8em -.2em var(--mw1),
+    inset 0em .1em 1em -.7em rgba(0,0,0,0),
+    inset 0em .1em 1em -.3em rgba(0,0,0,0),
+    inset 0em .1em 1em 0em rgba(0,0,0,0);
+}
+.clock.off .wires div:nth-child(1),
+.clock.off .wires div:nth-child(2){
+  box-shadow: inset 0em .1em .4em -.1em var(--mw1), inset 0 0 0 .5em #040909;
+}
+/* Botón en OFF parpadeo tenue */
+.clock.off .button{
+  background: #3cff00ff;
+
+  box-shadow:
+    0em -.1em .2em 0em #040909,
+    0em -.1em .2em .1em #040909,
+    0em 0em 1em .5em var(--_bloom),
+    0em -.1em 1em .5em #040909,
+    inset 0em 0em 1em 0em var(--mw1),
+    inset 0em 0em 1em .5em var(--mw1),
+    inset 0em 0em 1em 1em var(--mw1);
+  filter: blur(.7px);
+  animation: 5s flicker linear infinite;
+}
+
+/* Responsivo mínimo para móviles */
+@media (max-width: 768px){
+  .clock{ transform: scale(.7); }
+  .button{ transform: scale(.9); }
+}
+
+
+/* === Título de encendido (efecto latido lento) === */
+#titulo-apagado {
+  position: fixed;
+  top: 77%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: "Poppins", sans-serif;
+  font-size: 30px;
+  color: #ffb100;
+  text-shadow: 0 0 45px #ff8a00, 0 0 30px #ff5500;
+  animation: heartbeat 2.5s infinite ease-in-out;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+  z-index: 10;
+  pointer-events: none;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.1); }
+}
+
+
+#btn-regalo {
+  position: fixed;
+  bottom: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 18px 40px;
+  font-size: 20px;
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(45deg, #ff8a00, #ffcc00);
+  color: #000000ff;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  box-shadow: 0 0 25px #ff8a00;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+  z-index: 9999;
+  align-items:center;
+}
+
+#btn-regalo.show {
+  opacity: 1;
+  pointer-events: auto;
+  animation: heartbeat 2.5s infinite ease-in-out;
+}
+
+
+
+#texto{
+  font-size:28px;
+  width:85%;
+  max-width:600px;
+  line-height:1.6;
+  opacity:0;
+  text-align:center;
+  text-shadow:0 0 10px #fff;
+}
+
+/* ANIMACIÓN FINAL DE LUCES */
+.luces{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:-1;
+}
+
+.luces span{
+  position:absolute;
+  width:6px;
+  height:6px;
+  background:#fff;
+  border-radius:50%;
+  opacity:0;
+  animation:brillo 2s infinite ease-in-out;
+}
+
+@keyframes brillo{
+  0%{transform:scale(0);opacity:0;}
+  50%{transform:scale(1.4);opacity:1;}
+  100%{transform:scale(0);opacity:0;}
+}
+
+/* FADE-IN DEL TEXTO */
+@keyframes aparecer{
+  from{opacity:0;}
+  to{opacity:1;}
+}
+
+#pantalla-mensaje {
+  position: fixed !important;
+  inset: 0;
+  background: #ff00eeff;
+  display: none;
+  z-index: 999999999 !important;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  color: black;
+}
+
+
+
+
+</style>
+</head>
+<body>
+
+
+<div id="pantalla-mensaje">
+    <div id="texto"></div>
+    <div class="luces" id="luces"></div>
+</div>
+
+<!-- 🎆 Canvas de fuegos (detrás) -->
+<canvas id="fireworks"></canvas>
+
+<!-- Ruido SVG -->
+<svg id="noise-svg">
+  <filter id="noiseFilter">
+    <feTurbulence type="fractalNoise" baseFrequency="1.5" numOctaves="3" stitchTiles="stitch"/>
+  </filter>
+  <rect id="noise-rect" filter="url(#noiseFilter)"/>
+</svg>
+
+<!-- Reloj Nixie -->
+<div class="clock off">
+  <!-- ✨ Título de encendido -->
+
+
+  <div class="shadow"></div>
+
+  <div class="base-container"><div class="base"><div></div></div></div>
+
+  <div class="outer-pipe"><div class="inner-pipe"></div></div>
+
+  <div class="pipe-accents">
+    <div class="top-tube"></div>
+    <div class="tube-holders"><div></div><div></div></div>
+    <div class="top"></div>
+    <div class="topinset"></div>
+    <div class="left"><div></div><div></div><div></div></div>
+    <div class="right"><div></div><div></div><div></div></div>
+    <div class="bottom-left"></div>
+    <div class="bottom-right"></div>
+  </div>
+
+  <!-- DISPLAY: 16 tubos (dos capas por tubo) -->
+  <div class="display">
+    <!-- F  E -->
+    <div class="row">
+      <div class="col"><div>8</div><div id="char01">F</div><div id="char02">F</div></div>
+      <div class="col"><div>8</div><div id="char11">E</div><div id="char12">E</div></div>
+      <div class="col"><div>8</div><div id="char21">L</div><div id="char22">L</div></div>
+      <div class="col"><div>8</div><div id="char31">I</div><div id="char32">I</div></div>
+      <div class="col"><div>8</div><div id="char41">Z</div><div id="char42">Z</div></div>
+    </div>
+
+    <!-- C  U  M  P  L  E  A  Ñ  O  S -->
+    <div class="row">
+      <div class="col"><div>8</div><div id="char61">C</div><div id="char62">C</div></div>
+      <div class="col"><div>8</div><div id="char71">U</div><div id="char72">U</div></div>
+      <div class="col"><div>8</div><div id="char81">M</div><div id="char82">M</div></div>
+      <div class="col"><div>8</div><div id="char91">P</div><div id="char92">P</div></div>
+      <div class="col"><div>8</div><div id="char101">L</div><div id="char102">L</div></div>
+      <div class="col"><div>8</div><div id="char111">E</div><div id="char112">E</div></div>
+      <div class="col"><div>8</div><div id="char121">A</div><div id="char122">A</div></div>
+      <div class="col"><div>8</div><div id="char131">Ñ</div><div id="char132">Ñ</div></div>
+      <div class="col"><div>8</div><div id="char141">O</div><div id="char142">O</div></div>
+      <div class="col"><div>8</div><div id="char151">S</div><div id="char152">S</div></div>
+    </div>
+  </div>
+
+  <div class="glass-tube"></div>
+  <div class="hex"><div class="overlay"></div></div>
+
+  <div class="tube-base-container">
+    <div class="wires"><div></div><div></div></div>
+    <div class="tube-base"></div>
+    <div class="rods"><div class="left-rod"></div><div class="center-rod"></div><div class="right-rod"></div></div>
+    <div class="tube-btm"></div>
+  </div>
+
+  <div class="power-cord"><div></div><div></div></div>
+
+  <!-- Botón: conserva la misma lógica de alternar OFF/ON -->
+  <div class="button" onclick="document.querySelector('.clock').classList.toggle('off')">
+    <div></div>
+  </div>
+</div>
+
+<audio id="birthday-music" src="Cumpleaños Aesthetic.mp3" loop></audio>
+
+<script>
+/* === Lógica preservada + mensaje fijo === */
+const MSG = "FELIZ CUMPLEAÑOS"; // 16
+const tubePairs = [
+  ["char01","char02"], ["char11","char12"],
+  ["char21","char22"], ["char31","char32"],
+  ["char41","char42"], ["char51","char52"],
+  ["char61","char62"], ["char71","char72"],
+  ["char81","char82"], ["char91","char92"],
+  ["char101","char102"], ["char111","char112"],
+  ["char121","char122"], ["char131","char132"],
+  ["char141","char142"], ["char151","char152"]
+];
+(function setMessage(){
+  const chars = Array.from(MSG).map(c => c === ' ' ? '\u00A0' : c.toUpperCase());
+  for (let i = 0; i < tubePairs.length; i++){
+    const [a, b] = tubePairs[i];
+    const ch = (i < chars.length) ? chars[i] : '\u00A0';
+    const elA = document.getElementById(a);
+    const elB = document.getElementById(b);
+    if (elA) elA.textContent = ch;
+    if (elB) elB.textContent = ch;
+  }
+})();
+
+/* === 🎆 Fuegos artificiales: detrás y solo mientras el reloj está ON === */
+const fwCanvas = document.getElementById('fireworks');
+const fwCtx = fwCanvas.getContext('2d');
+let FW_W, FW_H;
+let fireworks = [];
+let particles = [];
+let spawnTimer = 0;         // temporizador para lanzar cohetes
+let spawnEvery = 2420;       // cada N ms se lanzan cohetes
+let lastT = performance.now();
+let running = true;         // anima siempre el canvas; sólo spawnea si está ON
+
+function resizeFW(){
+  FW_W = fwCanvas.width = window.innerWidth;
+  FW_H = fwCanvas.height = window.innerHeight;
+}
+resizeFW();
+window.addEventListener('resize', resizeFW);
+
+class Firework{
+  constructor(x, y, targetY, color){
+    this.x = x; this.y = y;
+    this.tx = x; this.ty = targetY;
+    this.color = color;
+    this.vy = - (3 + Math.random()*2.5);
+    this.vx = (Math.random()-0.5)*0.8;
+    this.exploded = false;
+  }
+  update(dt){
+    this.x += this.vx * dt*0.06;
+    this.y += this.vy * dt*0.06;
+    if (this.y <= this.ty){
+      this.exploded = true;
+      const n = 70 + Math.floor(Math.random()*40);
+      for (let i=0;i<n;i++) particles.push(new Particle(this.x, this.y, this.color));
+    }
+  }
+  draw(){
+    fwCtx.beginPath();
+    fwCtx.arc(this.x, this.y, 2, 0, Math.PI*2);
+    fwCtx.fillStyle = this.color;
+    fwCtx.fill();
+  }
+}
+
+class Particle{
+  constructor(x,y,color){
+    this.x=x; this.y=y; this.color=color;
+    const ang = Math.random()*Math.PI*2;
+    const sp = 1 + Math.random()*4.5;
+    this.vx = Math.cos(ang)*sp;
+    this.vy = Math.sin(ang)*sp;
+    this.alpha = 1;
+    this.fade = 0.008 + Math.random()*0.02;
+    this.gravity = 0.05;
+    this.size = 1 + Math.random()*2;
+  }
+  update(dt){
+    this.x += this.vx * dt*0.06;
+    this.y += (this.vy + this.gravity) * dt*0.06;
+    this.vx *= 0.992; this.vy *= 0.992;
+    this.alpha -= this.fade * dt*0.06;
+  }
+  draw(){
+    if (this.alpha<=0) return;
+    fwCtx.globalAlpha = Math.max(this.alpha,0);
+    fwCtx.beginPath();
+    fwCtx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+    fwCtx.fillStyle = this.color;
+    fwCtx.fill();
+    fwCtx.globalAlpha = 1;
+  }
+}
+
+function randColor(){
+  const colors = ['#ff6600','#ffd700','#ff2f86','#00ffff','#ff3c00','#00ff88','#ff5ee2','#8cff00'];
+  return colors[(Math.random()*colors.length)|0];
+}
+
+function spawnBurst(){
+  // Lanzar varios cohetes desde la parte baja hacia la mitad superior
+  const count = 6 + (Math.random()*6)|0;
+  for (let i=0;i<count;i++){
+    const x = Math.random()*FW_W;
+    const y = FW_H + Math.random()*40;
+    const ty = Math.random()*(FW_H*0.45) + FW_H*0.05;
+    fireworks.push(new Firework(x,y,ty,randColor()));
+  }
+}
+
+function loop(t){
+  const dt = Math.min(32, t - lastT); // limitar delta para estabilidad
+  lastT = t;
+  requestAnimationFrame(loop);
+
+  // rastro tenue
+  fwCtx.fillStyle = "rgba(0,0,0,0.2)";
+  fwCtx.fillRect(0,0,FW_W,FW_H);
+
+  // actualizar/lápizar
+  for (let i=fireworks.length-1;i>=0;i--){
+    const f = fireworks[i];
+    f.update(dt);
+    f.draw();
+    if (f.exploded) fireworks.splice(i,1);
+  }
+  for (let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.update(dt);
+    p.draw();
+    if (p.alpha<=0) particles.splice(i,1);
+  }
+
+  // si el reloj está ON, spawnear periódicamente
+  const isOn = !document.querySelector('.clock').classList.contains('off');
+  if (isOn){
+    spawnTimer += dt;
+    if (spawnTimer >= spawnEvery){
+      spawnTimer = 0;
+      spawnBurst();
+    }
+  } else {
+    // cuando está OFF no spawneamos; dejamos que se disipen
+    spawnTimer = 0;
+  }
+}
+requestAnimationFrame(loop);
+
+// detectar pulsación del botón para iniciar un estallido inmediato al pasar a ON
+const btn = document.querySelector('.button');
+btn.addEventListener('click', () => {
+  const isOn = !document.querySelector('.clock').classList.contains('off');
+  // El toggle ya ocurrió por el onclick inline, así que invertimos la lectura:
+  // Después del click, .off puede haber cambiado; damos un pequeño delay para leer el estado final.
+  setTimeout(()=>{
+    const nowOn = !document.querySelector('.clock').classList.contains('off');
+    if (nowOn){
+      // estallido instantáneo al encender
+      spawnBurst();
+    }
+  },100);
+});
+</script>
+
+<!-- ✨ Título de encendido -->
+<center><h1 id="titulo-apagado">💡Enciende la Lampara 🎂</h1></center>
+
+<script>
+const titulo = document.getElementById("titulo-apagado");
+const boton = document.querySelector(".button");
+const reloj = document.querySelector(".clock");
+
+// Función que actualiza visibilidad
+function actualizarTitulo() {
+  if (reloj.classList.contains("off")) {
+    titulo.style.opacity = "1";
+  } else {
+    titulo.style.opacity = "0";
+  }
+}
+
+// Ejecutar al inicio
+actualizarTitulo();
+
+// Cada vez que se presione el botón
+boton.addEventListener("click", () => {
+  setTimeout(actualizarTitulo, 10); // pequeño delay para esperar la clase
+});
+</script>
+
+
+<button id="btn-regalo">🎁 Abrir regalo</button>
+
+
+<script>
+const clockEl = document.querySelector(".clock");
+const botonLampara = document.querySelector(".button");
+const botonRegalo = document.getElementById("btn-regalo");
+const audio = document.getElementById("birthday-music");
+
+let timerRegalo = null;
+
+botonLampara.addEventListener("click", () => {
+  setTimeout(() => {
+    const encendido = !clockEl.classList.contains("off");
+
+    if (encendido) {
+      audio.play();
+      // Espera 3s y luego muestra el botón
+      timerRegalo = setTimeout(() => {
+        botonRegalo.classList.add("show");
+      }, 1000);
+    } else {
+      audio.pause();
+      // Si se apaga → ocultar y cancelar temporizador
+      botonRegalo.classList.remove("show");
+      clearTimeout(timerRegalo);
+    }
+  }, 100);
+});
+</script>
+
+<script>
+const pantalla = document.getElementById("pantalla-mensaje");
+const botonRegalo2 = document.getElementById("btn-regalo");
+const contenedor = document.getElementById("texto");
+
+const mensaje = `
+🕯️ Hoy es un día especial…  
+porque el mundo celebra que existes.  
+
+Cada momento contigo ilumina la vida,  
+igual que una vela en la más dulce oscuridad.  
+
+💛 Gracias por tu luz…   
+💛 Gracias por ser tú.  
+
+✨ Hoy deseo que tus sueños brillen  
+más fuerte que todas las estrellas del cielo.  
+Feliz Cumpleaños 🎂 ❤️
+`;
+
+let i = 0;
+
+// Mostrar la pantalla cuando se presione "Abrir regalo"
+botonRegalo2.addEventListener("click", () => {
+  pantalla.style.display = "flex";
+
+  // ocultar todo lo demás
+  document.querySelector(".clock").style.display = "none";
+  document.getElementById("titulo-apagado").style.display = "none";
+  botonRegalo2.style.display = "none";
+lanzarLuces();  
+  setTimeout(() => escribir(), 100); 
+});
+
+// efecto letra por letra
+function escribir(){
+  contenedor.style.opacity = "1"; // <-- ESTA LÍNEA LO SOLUCIONA
+  if(i < mensaje.length){
+    contenedor.innerHTML += mensaje[i] === "\n" ? "<br>" : mensaje[i];
+    i++;
+    setTimeout(escribir, 15);
+  } 
+}
+
+
+// luces finales
+function lanzarLuces(){
+  const luces = document.getElementById("luces");
+  for(let i=0;i<60;i++){
+    const s = document.createElement("span");
+    s.style.left = Math.random()*100+"%";
+    s.style.top = Math.random()*100+"%";
+    s.style.animationDuration = (1.5 + Math.random()*2)+"s";
+    s.style.animationDelay = (Math.random()*2)+"s";
+    luces.appendChild(s);
+  }
+}
+</script>
+
+</body>
+</html>
