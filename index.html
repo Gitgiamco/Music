@@ -757,7 +757,7 @@ body{
   </div>
 </div>
 
-<audio id="birthday-music" src="Cumpleaños Aesthetic.mp3" loop></audio>
+<audio id="birthday-music" src="Cumpleaños_Aesthetic.mp3" loop></audio>
 
 <script>
 /* === Lógica preservada + mensaje fijo === */
@@ -954,7 +954,9 @@ boton.addEventListener("click", () => {
 </script>
 
 
-<button id="btn-regalo">🎁 Abrir regalo</button>
+<button id="btn-regalo">🎁 Abrir carta</button>
+
+<button id="btn-audio" style="display:none; position:fixed; bottom:5%; left:50%; transform:translateX(-50%); padding:10px 20px; background:#ff8a00; color:white; border:none; border-radius:10px;">🎵 Reproducir Música</button>
 
 
 <script>
@@ -970,7 +972,17 @@ botonLampara.addEventListener("click", () => {
     const encendido = !clockEl.classList.contains("off");
 
     if (encendido) {
-      audio.play();
+      try {
+        audio.play().then(() => {
+          console.log("Audio reproduciéndose");
+        }).catch((error) => {
+          console.error("Error al reproducir audio:", error);
+          // Mostrar el botón alternativo
+          document.getElementById("btn-audio").style.display = "block";
+        });
+      } catch (e) {
+        console.error("Error de autoplay:", e);
+      }
       // Espera 3s y luego muestra el botón
       timerRegalo = setTimeout(() => {
         botonRegalo.classList.add("show");
@@ -982,6 +994,12 @@ botonLampara.addEventListener("click", () => {
       clearTimeout(timerRegalo);
     }
   }, 100);
+});
+
+// Event listener para el botón de audio alternativo
+document.getElementById("btn-audio").addEventListener("click", () => {
+  audio.play();
+  document.getElementById("btn-audio").style.display = "none";
 });
 </script>
 
@@ -1006,7 +1024,6 @@ más fuerte que todas las estrellas en el cielo ✨.
 Feliz Cumpleaños 🎂 🐱
 `;
 
-let i = 0;
 
 // Mostrar la pantalla cuando se presione "Abrir regalo"
 botonRegalo2.addEventListener("click", () => {
@@ -1016,19 +1033,10 @@ botonRegalo2.addEventListener("click", () => {
   document.querySelector(".clock").style.display = "none";
   document.getElementById("titulo-apagado").style.display = "none";
   botonRegalo2.style.display = "none";
-lanzarLuces();  
-  setTimeout(() => escribir(), 100); 
+  lanzarLuces();  
+  contenedor.innerHTML = mensaje.replace(/\n/g, '<br>');
+  contenedor.style.opacity = "1";
 });
-
-// efecto letra por letra
-function escribir(){
-  contenedor.style.opacity = "1"; // <-- ESTA LÍNEA LO SOLUCIONA
-  if(i < mensaje.length){
-    contenedor.innerHTML += mensaje[i] === "\n" ? "<br>" : mensaje[i];
-    i++;
-    setTimeout(escribir, 15);
-  } 
-}
 
 
 // luces finales
@@ -1047,6 +1055,7 @@ function lanzarLuces(){
 
 </body>
 </html>
+
 
 
 
