@@ -695,6 +695,8 @@ body{
 
 <div id="pantalla-mensaje">
     <div id="texto"></div>
+    <button id="btn-musica" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 20px; cursor: pointer; z-index: 1000000000;">⏸️</button>
+    <button id="btn-volver" style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 20px; cursor: pointer; z-index: 1000000000;">⬅️</button>
     <div class="luces" id="luces"></div>
 </div>
 
@@ -974,6 +976,8 @@ boton.addEventListener("click", () => {
 
 <button id="btn-regalo">🎁 Abrir carta</button>
 
+<button id="btn-acceso-mensaje" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 20px; cursor: pointer; z-index: 9999; display: none;">📜</button>
+
 <button id="btn-audio" style="display:none; position:fixed; bottom:5%; left:50%; transform:translateX(-50%); padding:10px 20px; background:#ff8a00; color:white; border:none; border-radius:10px;">🎵 Reproducir Música</button>
 
 
@@ -1005,11 +1009,15 @@ botonLampara.addEventListener("click", () => {
       timerRegalo = setTimeout(() => {
         botonRegalo.classList.add("show");
       }, 1000);
+      // Mostrar el botón de acceso directo al mensaje
+      document.getElementById("btn-acceso-mensaje").style.display = "block";
     } else {
       audio.pause();
       // Si se apaga → ocultar y cancelar temporizador
       botonRegalo.classList.remove("show");
       clearTimeout(timerRegalo);
+      // Ocultar el botón de acceso directo
+      document.getElementById("btn-acceso-mensaje").style.display = "none";
     }
   }, 100);
 });
@@ -1054,6 +1062,8 @@ botonRegalo2.addEventListener("click", () => {
   lanzarLuces();  
   contenedor.innerHTML = mensaje.replace(/\n/g, '<br>');
   contenedor.style.opacity = "1";
+  // Inicializar botón de música
+  document.getElementById("btn-musica").textContent = audio.paused ? "▶️" : "⏸️";
 });
 
 
@@ -1069,10 +1079,50 @@ function lanzarLuces(){
     luces.appendChild(s);
   }
 }
+
+// Control de música
+const btnMusica = document.getElementById("btn-musica");
+btnMusica.addEventListener("click", () => {
+  if (audio.paused) {
+    audio.play();
+    btnMusica.textContent = "⏸️";
+  } else {
+    audio.pause();
+    btnMusica.textContent = "▶️";
+  }
+});
+
+// Botón para volver
+const btnVolver = document.getElementById("btn-volver");
+btnVolver.addEventListener("click", () => {
+  pantalla.style.display = "none";
+  document.querySelector(".clock").style.display = "";
+  // El título se maneja automáticamente por el script de actualizarTitulo
+  // Mostrar el botón de acceso si la lámpara está encendida
+  if (!clockEl.classList.contains("off")) {
+    document.getElementById("btn-acceso-mensaje").style.display = "block";
+  }
+});
+
+// Botón de acceso directo al mensaje
+const btnAccesoMensaje = document.getElementById("btn-acceso-mensaje");
+btnAccesoMensaje.addEventListener("click", () => {
+  pantalla.style.display = "flex";
+  document.querySelector(".clock").style.display = "none";
+  document.getElementById("titulo-apagado").style.display = "none";
+  botonRegalo2.style.display = "none";
+  lanzarLuces();
+  contenedor.innerHTML = mensaje.replace(/\n/g, '<br>');
+  contenedor.style.opacity = "1";
+  document.getElementById("btn-musica").textContent = audio.paused ? "▶️" : "⏸️";
+  // Ocultar este botón
+  btnAccesoMensaje.style.display = "none";
+});
 </script>
 
 </body>
 </html>
+
 
 
 
